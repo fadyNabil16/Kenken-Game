@@ -2,30 +2,10 @@ import pygame
 import sys
 
 
-class Board:
-    def __init__(self, window, n):
-        self.tiles = [[Tile(5, window, i*60, j*60)
-                       for j in range(n)] for i in range(n)]
-        self.window = window
-
-    def draw_board(self):
-        '''Fills the board with Tiles and renders their values'''
-
-
-class Tile:
-    def __init__(self, value, window, x1, y1):
-        self.value = value
-        self.window = window
-        self.rect = pygame.Rect(x1, y1, 60, 60)  # dimensions for the rectangle
-        self.selected = False
-        self.correct = False
-        self.incorrect = False
-
-
 BLACK = (220, 224, 223)
 WHITE = (255, 255, 255)
-WINDOW_HEIGHT = 600
-WINDOW_WIDTH = 600
+WINDOW_HEIGHT = 800
+WINDOW_WIDTH = 800
 
 
 def checkborders(point, points):
@@ -33,7 +13,7 @@ def checkborders(point, points):
     right = not (tuple([point[0], point[1]+1])) in points
     top = not (tuple([point[0]-1, point[1]])) in points
     bot = not (tuple([point[0]+1, point[1]])) in points
-    print(point, [left, right, top, bot])
+    # print(point, [left, right, top, bot])
     return [left, right, top, bot]
 
 
@@ -41,6 +21,7 @@ blockSize = WINDOW_WIDTH//9
 
 
 def drawGrid(n):
+    blockSize = WINDOW_WIDTH//n
     # Set the size of the grid block
     for x in range(n):
         for y in range(n):
@@ -56,7 +37,8 @@ def drawGrid(n):
 bi = (125, 210, 110)
 
 
-def draw_cages(_points):
+def draw_cages(_points,n):
+    blockSize = WINDOW_WIDTH//n
     points = sorted(list(_points))
     for point in points:
         x = checkborders(point, points)
@@ -81,8 +63,9 @@ def main():
     SCREEN = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
     CLOCK = pygame.time.Clock()
     SCREEN.fill(WHITE)
-    drawGrid(9)
-    draw_cages(((1, 1), (1, 2), (2, 2), (2, 3)))
+    n=7
+    drawGrid(n)
+    draw_cages(((1, 1), (1, 2), (2, 2), (2, 3)),n)
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
