@@ -67,11 +67,27 @@ def draw_cage(n,_points,op,target):
     
     #draw Cage Operation and target
     x,y=(points[0][1]-0.95)*blockSize,(points[0][0]-0.99)*blockSize
-    my_font = pygame.font.SysFont('Comic Sans MS', 20) ##
-    text_surface = my_font.render(f"{op}{target}", False, (0, 0, 0)) ##
-    SCREEN.blit(text_surface, (x,y)) ##
-    
+    text = f"{op}{target}"
+    putText((x,y),text)
+    # my_font = pygame.font.SysFont('Comic Sans MS', 20) ##
+    # text_surface = my_font.render(f"{op}{target}", False, (0, 0, 0)) ##
+    # SCREEN.blit(text_surface, (x,y)) ##
 
+def putText(coord,text):
+    my_font = pygame.font.SysFont('Comic Sans MS', 20) ##
+    text_surface = my_font.render(f"{text}", False, (0, 0, 0)) ##
+    SCREEN.blit(text_surface, coord) ##
+    return
+
+def solve(n,solveddic):
+    blockSize = WINDOW_WIDTH//n
+    for cage in solveddic:
+        # print(cage,"cage")
+        for i,cell in enumerate(cage):
+            # print(cell)
+            x,y = (cell[1]-0.5)*blockSize,(cell[0]-0.65)*blockSize
+            text = solveddic[cage][i]
+            putText((x,y),text)
 
 def main():
     global SCREEN, CLOCK
@@ -80,10 +96,12 @@ def main():
     SCREEN = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
     CLOCK = pygame.time.Clock()
     SCREEN.fill(WHITE)
-    n=5
+    n=6
     drawGrid(n)
-    testcase = [(((1, 1), (1, 2), (2, 2), (2, 3)), '*', 8), (((2, 1), (3, 1)), '/', 5), (((4, 1), (4, 2), (5, 2), (5, 3)), '+', 15), (((5, 1),), '.', 3), (((3, 2),), '.', 3), (((1, 3), (1, 4)), '*', 15), (((3, 3),), '.', 2), (((4, 3), (4, 4), (3, 4), (3, 5)), '+', 13), (((2, 4),), '.', 4), (((5, 4),), '.', 2), (((1, 5), (2, 5)), '+', 5), (((4, 5), (5, 5)), '/', 5)]
+    testcase = [(((1, 1),), '.', 1), (((2, 1), (2, 2)), '/', 3), (((3, 1), (4, 1), (5, 1), (5, 2)), '*', 180), (((5, 3), (6, 1), (6, 2), (6, 3)), '+', 13), (((1, 2), (1, 3)), '-', 2), (((3, 2), (3, 3)), '-', 2), (((4, 2), (4, 3)), '/', 2), (((2, 3), (2, 4)), '-', 1), (((2, 5), (3, 5), (1, 4), (1, 5)), '+', 11), (((4, 4), (5, 4), (5, 5), (3, 4)), '*', 72), (((6, 6), (6, 4), (6, 5)), '+', 9), (((4, 5), (4, 6), (2, 6), (3, 6)), '+', 19), (((1, 6),), '.', 4), (((5, 6),), '.', 2)]
     draw_cages(n,testcase)
+    assign = {((1, 1),): (1,), ((2, 1), (2, 2)): (2, 6), ((3, 1), (4, 1), (5, 1), (5, 2)): (3, 4, 5, 3), ((5, 3), (6, 1), (6, 2), (6, 3)): (1, 6, 2, 4), ((1, 2), (1, 3)): (5, 3), ((3, 2), (3, 3)): (4, 6), ((4, 2), (4, 3)): (1, 2), ((2, 3), (2, 4)): (5, 4), ((2, 5), (3, 5), (1, 4), (1, 5)): (1, 2, 2, 6), ((4, 4), (5, 4), (5, 5), (3, 4)): (3, 6, 4, 1), ((6, 6), (6, 4), (6, 5)): (1, 5, 3), ((4, 5), (4, 6), (2, 6), (3, 6)): (5, 6, 3, 5), ((1, 6),): (4,), ((5, 6),): (2,)}
+    solve(n,assign)
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
