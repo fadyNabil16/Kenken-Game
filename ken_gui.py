@@ -176,6 +176,7 @@ def main():
     global SCREEN, CLOCK
     pygame.init()
     pygame.font.init()
+    pygame.display.set_caption('Kenken')
     SCREEN = pygame.display.set_mode((WINDOW_WIDTH, 300))
     CLOCK = pygame.time.Clock()
     SCREEN.fill(WHITE)
