@@ -181,3 +181,15 @@ def num_legal_values(csp, var, assignment):
         return count(csp.nconflicts(var, val, assignment) == 0
                      for val in csp.domains[var])
 # ______________________________________________________________________________
+# Value ordering
+
+#### Return the values available for this variable (values in its current domain) ####
+def unordered_domain_values(var, assignment, csp):
+    """The default value order."""
+    return csp.choices(var)
+
+
+def lcv(var, assignment, csp):
+    """Least-constraining-values heuristic."""
+    return sorted(csp.choices(var),
+                  key=lambda val: csp.nconflicts(var, val, assignment))
