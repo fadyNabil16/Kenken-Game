@@ -115,6 +115,46 @@ class CSP(search.Problem):
 
 
 
+# Constraint Propagation with AC-3
+
+
+########## Our Ref for this algorithm: https://medium.com/swlh/how-to-solve-constraint-satisfaction-problems-csps-with-ac-3-algorithm-in-python-f7a9be538cfe
+def AC3(csp, queue=None, removals=None):
+    if queue is None:
+        #### queue is a list that contains pairs of variables with their neighbors ####
+        #### Generate all arcs ####
+        queue = [(Xi, Xk) for Xi in csp.variables for Xk in csp.neighbors[Xi]]
+    csp.support_pruning()
+    while queue:
+        (Xi, Xj) = queue.pop()
+        
+        if revise(csp, Xi, Xj, removals):
+            #### return false in case of: current domain of Xi is empty ####
+            if not csp.curr_domains[Xi]:
+                return False
+            
+            #### if Xi domain changes due to conflicts, check the arc from the other side ####
+            for Xk in csp.neighbors[Xi]:
+                if Xk != Xj:
+                    queue.append((Xk, Xi))
+    return True
+
+
+def revise(csp, Xi, Xj, removals):
+    """Return true if we remove a value."""
+    revised = False
+    for x in csp.curr_domains[Xi][:]:
+        # If Xi=x conflicts with Xj=y for every possible y, eliminate Xi=x
+        if all(not csp.constraints(Xi, x, Xj, y) for y in csp.curr_domains[Xj]):
+            csp.prune(Xi, x, removals)
+            revised = True
+    return revised
+
+
+
+
+
+
 # ______________________________________________________________________________
 
 # CSP Backtracking Search
