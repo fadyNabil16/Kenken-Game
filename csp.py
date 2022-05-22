@@ -71,3 +71,73 @@ class CSP(search.Problem):
         return (len(assignment) == len(self.variables)
                 and all(self.nconflicts(variables, assignment[variables], assignment) == 0
                         for variables in self.variables))
+    
+    
+    # The following fn.s are for constraint propagation
+    def support_pruning(self):
+        """Make sure we can prune values from domains. (We want to pay
+        for this only if we use it.)"""
+        if self.curr_domains is None:
+            self.curr_domains = {v: list(self.domains[v]) for v in self.variables}
+
+    def suppose(self, var, value): #################################aya
+        """Start accumulating inferences from assuming var=value."""
+        self.support_pruning()
+        removals = [(var, a) for a in self.curr_domains[var] if a != value]
+        self.curr_domains[var] = [value]
+        return removals
+
+    def prune(self, var, value, removals):
+        """Rule out var=value."""
+        ####Remove value that causes conflicts####
+        self.curr_domains[var].remove(value)
+        ####Store the removed value in removals####
+        if removals is not None:
+            removals.append((var, value))
+
+    def choices(self, var):
+        """Return all values for var that aren't currently ruled out."""
+        #### Retern values that haven'e been pruned ####  
+        return (self.curr_domains or self.domains)[var]
+
+    def restore(self, removals):
+        """Undo a supposition and all inferences from it."""
+        for B, b in removals:
+            self.curr_domains[B].append(b)
+
+    
+    # This is for min_conflicts search
+    def conflicted_vars(self, current):
+        """Return a list of variables in current assignment that are in conflict"""
+        return [var for var in self.variables
+                if self.nconflicts(var, current[var], current) > 0]
+# ______________________________________________________________________________    
+
+
+
+# ______________________________________________________________________________
+
+# CSP Backtracking Search
+
+# Variable ordering
+def first_unassigned_variable(assignment, csp):
+    """The default variable order."""
+    return first([var for var in csp.variables if var not in assignment])
+
+
+''' Return the variable that has the least no. of values in its current domain OR 
+    the variable that has the least no. of conflicts'''
+def mrv(assignment, csp):
+    """Minimum-remaining-values heuristic."""
+    return argmin_random_tie(
+        [v for v in csp.variables if v not in assignment],
+        key=lambda var: num_legal_values(csp, var, assignment))
+
+
+def num_legal_values(csp, var, assignment):
+    if csp.curr_domains:
+        return len(csp.curr_domains[var])
+    else:
+        return count(csp.nconflicts(var, val, assignment) == 0
+                     for val in csp.domains[var])
+# ______________________________________________________________________________
