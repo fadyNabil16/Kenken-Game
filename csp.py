@@ -193,3 +193,13 @@ def lcv(var, assignment, csp):
     """Least-constraining-values heuristic."""
     return sorted(csp.choices(var),
                   key=lambda val: csp.nconflicts(var, val, assignment))
+    
+    
+#__________________________________________________________-
+# Inference
+
+
+
+def mac(csp, var, value, assignment, removals):
+    """Maintain arc consistency."""
+    return AC3(csp, [(X, var) for X in csp.neighbors[var]], removals)
