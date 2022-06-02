@@ -1,34 +1,16 @@
 from time import time
 import csp
-
-# @ <component>: <usage>
-
-# @ stderr: reporting errors
-# @ stdin: receiving input
 from sys import stderr, stdin
-
-# @ product: creation of the variables' domains
-# @ permutations: determine the satisfiability of an operation
 from itertools import product, permutations
-
-# @ reduce: determine the result of an operation
 from functools import reduce
-
-# @ seed: seed the pseudorandom number generator
-# @ random, shuffle, randint, choice: generate a random kenken puzzle
 from random import seed, random, shuffle, randint, choice
-
-# @ time: benchmarking
 from time import time
-
-# @ writer: output benchmarking data in a csv format
 from csv import writer
 
+
 def operation(operator):
-    """
-    A utility function used in order to determine the operation corresponding
-    to the operator that is given in string format
-    """
+    #mapping between the string symbol and the matmatical operation 
+    
     if operator == '+':
         return lambda a, b: a + b
     elif operator == '-':
@@ -40,10 +22,8 @@ def operation(operator):
     else:
         return None
 
-def adjacent(xy1, xy2): #two points ganb b3d like(1,2),(1,1)
-    """
-    Checks wheither two positions represented in 2D coordinates are adjacent
-    """
+def adjacent(xy1, xy2): #check if the two point is adjacent or not like(1,2),(1,1)
+  
     x1, y1 = xy1
     x2, y2 = xy2
 
@@ -52,38 +32,13 @@ def adjacent(xy1, xy2): #two points ganb b3d like(1,2),(1,1)
     return (dx == 0 and abs(dy) == 1) or (dy == 0 and abs(dx) == 1)
 
 def generate(size):
-    """
-    Generate a random kenken puzzle of the given size
-      * Initially create a latin square of size 'size' and elements the values [1...size]
-      * Shuffle the board by rows and columns in order to get a somewhat random
-        board that still satisfies the different row-col constraint of kenken
-      * Initialize the 'uncaged' set with all cell coordinates
-      * Proceed in creating cliques:
-        * Randomly choose a clique size in the range [1..4]
-        * Set the first cell in the 'uncaged' set in row major order as
-          the root cell of the clique and remove it from the 'uncaged' set
-        * Randomly visit at most 'clique-size' 'uncaged' adjacent cells
-          in random directions while adding them to the current clique
-          and removing them from the 'uncaged' cells
-        * The size of the resulting clique is:
-          * == 1:
-            there is no operation to be performed and the target of the clique
-            is equal to the only element of the clique
-          * == 2:
-            * if the two elements of the clique can be divided without a remainder
-              then the operation is set to division and the target is the quotient
-            * otherwise, the operation is set to subtraction and the target is the
-              difference of the elements
-          * >  2:
-           randomly choose an operation between addition and multiplication.
-            The target of the operation is the result of applying the decided
-            operation on all the elements of the clique
-        * Continue until the 'uncaged' set is empty i.e. there is no cell belonging
-          to no clique
-    """
+    #this function is responsilble for creating the random board 
+    
+    #steps: 
+    #1- create a square with size equal size anl fill it with numbers from 1 to size
 
     board = [[((i + j) % size) + 1 for i in range(size)] for j in range(size)]
-
+    #2- shuffle the board to get some type of randomness 
     for _ in range(size):
         shuffle(board)
 
@@ -93,23 +48,25 @@ def generate(size):
                 for r in range(size):
                     board[r][c1], board[r][c2] = board[r][c2], board[r][c1]
 
-    board = {(i + 1, j+ 1): board[i][j] for i in range(size) for j in range(size)}#################################333
-
-    uncaged = sorted(board.keys(), key=lambda var: var[1])
-
+    board = {(i + 1, j+ 1): board[i][j] for i in range(size) for j in range(size)}
+    
+    #3- Initialize the 'uncaged' set with all cell coordinates
+    
+    uncaged = sorted(board.keys(), key=lambda var: var[1])  #set
     cliques = []
     while uncaged:
-
+       
         cliques.append([])
-
+        
+        #4- initilize cage size with random it from 1 to 4 
         csize = randint(1, 4)
-
+        
+        #5- put the first cell from the "uncaged" set in the cliques set and remove it from the uncaged cell 
         cell = uncaged[0]
-
         uncaged.remove(cell)
 
         cliques[-1].append(cell)
-
+        #6- loop for the cage size -1 times and repeat the previous steps 
         for _ in range(csize - 1):
 
             adjs = [other for other in uncaged if adjacent(cell, other)]
@@ -124,6 +81,15 @@ def generate(size):
             cliques[-1].append(cell)
             
         csize = len(cliques[-1])
+        # 7- according to the cage size do the operation 
+        """
+        8- is csize == 1 , there is no operation just make the target equal to the element of the clique
+        else if csize == 2 check
+            if the clique can be divided without a remainder , set te operation to devision 
+            if the clique can be divided with a remainder , set te operation to subtraction 
+        else if csize >=2  choose random operation from addition or multiplication 
+        
+        """
         if csize == 1:
             cell = cliques[-1][0]
             cliques[-1] = ((cell, ), '.', board[cell])
@@ -131,9 +97,9 @@ def generate(size):
         elif csize == 2:
             fst, snd = cliques[-1][0], cliques[-1][1]
             if board[fst] / board[snd] > 0 and not board[fst] % board[snd]:
-                operator = "/" # choice("+-*/")
+                operator = "/" 
             else:
-                operator = "-" # choice("+-*")
+                operator = "-" 
         else:
             operator = choice("+*")
 
@@ -142,17 +108,12 @@ def generate(size):
         cliques[-1] = (tuple(cliques[-1]), operator, int(target))
 
     return size, cliques
+#----------------------------------------------------------------------
 
 def validate(size, cliques):
-    """
-    Validate the integrity of the input as a kenken board
-      * For each of the cliques:
-        * Remove duplicate members of the clique at hand
-        * Check whether the specified operator is acceptable or not
-        * Check if any of the members of the clique are out of bounds
-        * Check if any member of the clique is mentioned in any other clique
-      * Check if the given cliques cover the whole board or not
-    """
+    #checking for any problem:
+   
+
     outOfBounds = lambda xy: xy[0] < 1 or xy[0] > size or xy[1] < 1 or xy[1] > size
 
     mentioned = set()
@@ -162,16 +123,15 @@ def validate(size, cliques):
         cliques[i] = (tuple(set(members)), operator, target)
 
         members, operator, target = cliques[i]
-
+        # 1- check if the opertator is not "+-*/."
         if operator not in "+-*/.":
             print("Operation", operator, "of clique", cliques[i], "is unacceptable", file=stderr)
             exit(1)
-
+        # 2- check if the clique member is out of the bound 
         problematic = list(filter(outOfBounds, members))
         if problematic:
             print("Members", problematic, "of clique", cliques[i], "are out of bounds", file=stderr)
             exit(2)
-
         problematic = mentioned.intersection(set(members))
         if problematic:
             print("Members", problematic, "of clique", cliques[i], "are cross referenced", file=stderr)
@@ -182,27 +142,18 @@ def validate(size, cliques):
     indexes = range(1, size + 1)
 
     problematic = set([(x, y) for y in indexes for x in indexes]).difference(mentioned)
-
+    
+    # 3- check if the clique member is  mentioned in any other clique 
     if problematic:
         print("Positions", problematic, "were not mentioned in any clique", file=stderr)
         exit(4)
 
 def RowXorCol(xy1, xy2):
-    """
-    Evaluates to true if the given positions are in the same row / column
-    but are in different columns / rows
-    """
+    # return true if the two cells in the same raw or in the same column 
     return (xy1[0] == xy2[0]) != (xy1[1] == xy2[1])
 
 def conflicting(A, a, B, b):
-    """
-    Evaluates to true if:
-      * there exists mA so that ma is a member of A and
-      * there exists mb so that mb is a member of B and
-      * RowXorCol(mA, mB) evaluates to true and
-      * the value of mA in 'assignment' a is equal to
-        the value of mb in 'assignment' b
-    """
+   
     for i in range(len(A)):
         for j in range(len(B)):
             mA = A[i]
@@ -211,15 +162,17 @@ def conflicting(A, a, B, b):
             ma = a[i]
             mb = b[j]
             if RowXorCol(mA, mB) and ma == mb:
-                return True
+                """"
+                if RowXorCol(mA, mB) evaluates to true and 
+                the value of mA in 'assignment' a is equal to the value of mb in 'assignment' b
 
+                """
+                return True   
+            
     return False
 
 def satisfies(values, operation, target):
-    """
-    Evaluates to true if the result of applying the operation
-    on a permutation of the given values is equal to the specified target
-    """
+  
     for p in permutations(values):
         if reduce(operation, p) == target:
             return True
@@ -249,7 +202,8 @@ def gdomains(size, cliques):
         members, operator, target = clique
 
         domains[members] = list(product(range(1, size + 1), repeat=len(members)))
-
+        #Discard any value does not 'satisfy' the given operation
+        
         qualifies = lambda values: not conflicting(members, values, members, values) and satisfies(values, operation(operator), target)
 
         domains[members] = list(filter(qualifies, domains[members]))
@@ -257,13 +211,7 @@ def gdomains(size, cliques):
     return domains
 
 def gneighbors(cliques):
-    """
-    Determine the neighbors of each variable for the given puzzle
-        For every clique in cliques
-        * Initialize its neighborhood as empty
-        * For every clique in cliques other than the clique at hand,
-            if they are probable to 'conflict' they are considered neighbors
-    """
+  
     neighbors = {}
     for members, _, _ in cliques:
         neighbors[members] = []
@@ -271,24 +219,17 @@ def gneighbors(cliques):
     for A, _, _ in cliques:
         for B, _, _ in cliques:
             if A != B and B not in neighbors[A]:
+               #if they are probable to 'conflict' they are considered neighbors 
                 if conflicting(A, [-1] * len(A), B, [-1] * len(B)):
                     neighbors[A].append(B)
                     neighbors[B].append(A)
 
     return neighbors
 
-class Kenken(csp.CSP):
+class Kenken(csp.CSP): #create kenken class inherite from csp class
 
     def __init__(self, size, cliques):
-        """
-        In my implementation, I consider the cliques themselves as variables.
-        A clique is of the format (((X1, Y1), ..., (XN, YN)), <operation>, <target>)
-        where
-            * (X1, Y1), ..., (XN, YN) are the members of the clique
-            * <operation> is either addition, subtraction, division or multiplication
-            * <target> is the value that the <operation> should produce
-              when applied on the members of the clique
-        """
+       
         validate(size, cliques)
         
         variables = [members for members, _, _ in cliques]
@@ -301,7 +242,6 @@ class Kenken(csp.CSP):
 
         self.size = size
 
-        # Used in benchmarking
         self.checks = 0
 
         # Used in displaying
@@ -312,27 +252,17 @@ class Kenken(csp.CSP):
             self.meta[members] = (operator, target)
             self.padding = max(self.padding, len(str(target)))        
 
-    # def nconflicts(self, var, val, assignment):
-
-    # def assign(self, var, val, assignment):
-
-    # def unassign(self, var, assignment):
 
     def constraint(self, A, a, B, b):
-        """
-        Any two variables satisfy the constraint if they are the same
-        or they are not 'conflicting' i.e. every member of variable A
-        which shares the same row or column with a member of variable B
-        must not have the same value assigned to it
-        """
+        #check for the constriants 
+        #if any two variables in the same cli. or the same row must not have the same value
+      
         self.checks += 1
 
         return A == B or not conflicting(A, a, B, b)
 
     def display(self, assignment):
-        """
-        Print the kenken puzzle in a format easily readable by a human
-        """
+        #print the kenken board we use it for debuggig 
         if assignment:
             atomic = {}
             for members in self.variables:
@@ -384,45 +314,11 @@ class Kenken(csp.CSP):
 
             print(rpadding)
 
-    def info(self):
-        """
-        Print debugging info
-        """
-
-        print("\nVariables:")
-        for var in self.variables:
-            print(var)
-
-        print("\nDomains:")
-        for var in self.variables:
-            print("domains[", var, "] =", self.domains[var])
-
-        print("\nNeighbors:")
-        for var in self.variables:
-            print("neighbors[", var, "] =", self.neighbors[var])
-
-def benchmark(kenken, algorithm):
-        """
-        Used in order to benchmark the given algorithm in terms of
-          * The number of nodes it visits
-          * The number of constraint checks it performs
-          * The number of assignments it performs
-          * The completion time
-        """
-        kenken.checks = kenken.nassigns = 0
-
-        dt = time()
-
-        assignment = algorithm(kenken)
-
-        dt = time() - dt
-
-        return assignment, (kenken.checks, kenken.nassigns, dt)
 
 
 if __name__ == "__main__":
 
-    board_num = 10
+    board_num = 1
     generate_num = 7
     time1 = time()
     for i in range(board_num):
@@ -431,12 +327,10 @@ if __name__ == "__main__":
         ken = Kenken(size, cliques)
         
         assignment = csp.backtracking_search(ken, inference=csp.no_inference)
+        #for  inference write forward_checking for forward cheching and mac for arc consistency 
         
-        #print(assignment)
-
         ken.display(assignment)
-        #print(cliques)
-    
+       
     time2 = time()
     print(time1)
     print(time2)
